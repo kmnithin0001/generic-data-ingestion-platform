@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Standard Console Appender for development/local profiles -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- Pattern masks passwords, bearer tokens, api keys, and auth headers -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [Correlation-ID: %X{correlationId:-N/A}, Request-ID: %X{requestId:-N/A}, Job-ID: %X{jobId:-N/A}] - %replace(%msg){'(?i)(password|pass|token|bearer|apikey|api[-_]?key|authorization|auth)=[^,\s&amp;"]+', '$1=******'}%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- JSON Console Appender for Container Environments (Prod stdout) -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Excludes raw messages and applies custom masking patterns -->
+            <maskingPattern>(?i)(password|pass|token|bearer|apikey|api[-_]?key|authorization|auth)=[^,\s&amp;"]+</maskingPattern>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <thread>threadName</thread>
+                <level>level</level>
+                <logger>logger</logger>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <!-- Rolling File Appender for Production (Persisted Logging) -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/application.json.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Daily rollover with 10MB size limit per file, keeping 30 days of archives -->
+            <fileNamePattern>logs/archived/application-%d{yyyy-MM-dd}.%i.json.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <maskingPattern>(?i)(password|pass|token|bearer|apikey|api[-_]?key|authorization|auth)=[^,\s&amp;"]+</maskingPattern>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <thread>threadName</thread>
+                <level>level</level>
+                <logger>logger</logger>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <!-- Configuration for local/dev environments -->
+    <springProfile name="local,dev,test">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+        </root>
+        <logger name="com.intentwise.ingestion" level="DEBUG" />
+    </springProfile>
+
+    <!-- Configuration for production environment -->
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE" />
+            <appender-ref ref="JSON_FILE" />
+        </root>
+        <logger name="com.intentwise.ingestion" level="INFO" />
+    </springProfile>
+
+</configuration>

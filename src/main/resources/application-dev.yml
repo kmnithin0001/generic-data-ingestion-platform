@@ -1,0 +1,31 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+app:
+  async:
+    corePoolSize: 4
+    maxPoolSize: 8
+    queueCapacity: 50
+    threadNamePrefix: "ingestion-async-dev-executor-"
+    rejectionPolicy: "CallerRunsPolicy"
+  ingestion:
+    progress-interval: 1
